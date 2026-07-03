@@ -40,7 +40,8 @@
       inset:0;
       z-index:-3;
       background:url("637e6d07-f6da-4d28-a1c4-03eb94488f75.png") center/cover no-repeat;
-      opacity:.92;
+      opacity:1;
+      filter:brightness(1.65) contrast(1.45);
     }
     body::after{
       content:"";
@@ -48,8 +49,8 @@
       inset:0;
       z-index:-2;
       background:
-        radial-gradient(circle at center,rgba(0,0,0,.08) 0,rgba(0,0,0,.28) 36%,rgba(0,0,0,.66) 100%),
-        linear-gradient(180deg,rgba(0,0,0,.08),rgba(0,0,0,.62));
+        radial-gradient(circle at center,rgba(0,0,0,.00) 0,rgba(0,0,0,.10) 42%,rgba(0,0,0,.32) 100%),
+        linear-gradient(180deg,rgba(0,0,0,.00),rgba(0,0,0,.22));
       pointer-events:none;
     }
     .page{
@@ -96,7 +97,7 @@
     .card{
       appearance:none;
       border:1px solid var(--line);
-      background:linear-gradient(180deg,rgba(15,15,15,.72),rgba(2,2,2,.64));
+      background:linear-gradient(180deg,rgba(15,15,15,.74),rgba(2,2,2,.66));
       color:var(--ink);
       border-radius:28px;
       padding:clamp(16px,2.8vw,26px);
