@@ -32,6 +32,7 @@
     .card:hover,.card:focus-visible{transform:translateY(-4px);border-color:var(--line2);background:linear-gradient(180deg,rgba(25,25,25,.84),rgba(5,5,5,.78));box-shadow:0 30px 80px rgba(0,0,0,.8);outline:none}
     .icon-wrap{width:min(178px,48vw);aspect-ratio:1/1;border-radius:24px;display:grid;place-items:center;background:rgba(0,0,0,.42);border:1px solid rgba(242,238,228,.12);overflow:hidden}
     .icon-wrap img{width:100%;height:100%;object-fit:cover;display:block;filter:contrast(.98) brightness(.98)}
+    .money-icon{font-family:"Courier New",monospace;font-size:82px;font-weight:900;line-height:1;color:rgba(242,238,228,.92);text-shadow:0 4px 26px rgba(0,0,0,.9)}
     .card-title{font-size:clamp(24px,3.3vw,34px);line-height:1;letter-spacing:.03em;text-shadow:0 2px 18px rgba(0,0,0,.9)}
     .card-note{max-width:250px;margin:0;color:var(--muted);font-family:"Courier New",monospace;font-size:13px;font-weight:700;line-height:1.35}
     .modal{position:fixed;inset:0;z-index:20;display:none;place-items:center;padding:18px;background:rgba(0,0,0,.72);backdrop-filter:blur(5px)}
@@ -46,7 +47,7 @@
     .status{min-height:18px;margin-top:12px;color:var(--muted);font-family:"Courier New",monospace;font-size:12px}
     .close{margin-top:12px;background:transparent;border:0;color:rgba(242,238,228,.68);font-family:"Courier New",monospace;cursor:pointer;padding:8px}
     footer{text-align:center;color:rgba(242,238,228,.52);font-family:"Courier New",monospace;font-size:12px;font-weight:700;text-shadow:0 2px 18px rgba(0,0,0,.95)}
-    @media(max-width:860px){.page{justify-content:flex-start;padding-top:34px}.grid{grid-template-columns:1fr;max-width:460px;margin:0 auto;width:100%}.card{min-height:250px;border-radius:24px}.icon-wrap{width:148px;border-radius:20px}}
+    @media(max-width:860px){.page{justify-content:flex-start;padding-top:34px}.grid{grid-template-columns:1fr;max-width:460px;margin:0 auto;width:100%}.card{min-height:250px;border-radius:24px}.icon-wrap{width:148px;border-radius:20px}.money-icon{font-size:68px}}
   </style>
 </head>
 <body>
@@ -59,6 +60,7 @@
     <section class="grid" aria-label="Accesos principales">
       <button class="card" type="button" data-title="Drive" data-url="https://drive.google.com/drive/folders/1kHqT7ae_ZD0qsd1G9TFvjYpJXLMS5D2Q?usp=drive_link" data-note="Carpeta madre de producción."><span class="icon-wrap"><img src="Drive icon.png" alt=""></span><span class="card-title">Drive</span><span class="card-note">Carpeta madre de producción</span></button>
       <button class="card" type="button" data-title="Ensayos" data-url="https://jrrguille-bit.github.io/jona-ensayos/" data-note="Disponibilidad de actores y ensayos."><span class="icon-wrap"><img src="ensayos.png" alt=""></span><span class="card-title">Ensayos</span><span class="card-note">Actores y disponibilidad</span></button>
+      <button class="card" type="button" data-title="Dineros" data-url="https://jrrguille-bit.github.io/jona-produccion/dineros/" data-note="Carga simple de quién pagó y cuánto pagó."><span class="icon-wrap"><span class="money-icon">$</span></span><span class="card-title">Dineros</span><span class="card-note">Carga de pagos</span></button>
       <button class="card" type="button" data-title="Compras" data-url="https://jrrguille-bit.github.io/jona-logistica-mapa/" data-note="Supermercados, almacenes y farmacias cerca de la casa."><span class="icon-wrap"><img src="compras.png" alt=""></span><span class="card-title">Compras</span><span class="card-note">Supermercados, almacenes y farmacias</span></button>
     </section>
     <footer>GitHub Pages · Jona producción</footer>
