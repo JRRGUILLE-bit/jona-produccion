@@ -53,8 +53,15 @@
     const form=document.getElementById('form');
     const boton=document.getElementById('boton');
     const statusBox=document.getElementById('status');
-    const iframe=document.getElementById('iframe');
     let enviado=false;
+    let timer=null;
+
+    function destrabar(){
+      boton.disabled=false;
+      boton.textContent='Guardar';
+      enviado=false;
+      if(timer){clearTimeout(timer);timer=null}
+    }
 
     form.addEventListener('submit',()=>{
       enviado=true;
@@ -62,16 +69,26 @@
       boton.textContent='Guardando...';
       statusBox.className='status';
       statusBox.textContent='Mandando al Sheet...';
+      timer=setTimeout(()=>{
+        if(!enviado)return;
+        statusBox.className='status bad';
+        statusBox.textContent='No llegó respuesta del Apps Script. Revisá la implementación.';
+        destrabar();
+      },15000);
     });
 
-    iframe.addEventListener('load',()=>{
-      if(!enviado)return;
-      statusBox.className='status ok';
-      statusBox.textContent='Guardado. Revisá el Google Sheet.';
-      form.reset();
-      boton.disabled=false;
-      boton.textContent='Guardar';
-      enviado=false;
+    window.addEventListener('message',event=>{
+      const data=event.data||{};
+      if(data.source!=='dineros-tumberos')return;
+      if(data.ok){
+        statusBox.className='status ok';
+        statusBox.textContent='Guardado. Revisá el Google Sheet.';
+        form.reset();
+      }else{
+        statusBox.className='status bad';
+        statusBox.textContent=data.message||'Error al guardar.';
+      }
+      destrabar();
     });
   </script>
 </body>
