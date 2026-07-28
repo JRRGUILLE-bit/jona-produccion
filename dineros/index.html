@@ -121,7 +121,7 @@
       if(data.source!=='dineros-tumberos')return;
       if(data.ok){
         statusBox.className='status ok';
-        statusBox.textContent='Guardado en '+data.moneda+'. Revisá el Google Sheet.';
+        statusBox.textContent='Guardado en '+(data.moneda||monedaSeleccionada())+'. Revisá el Google Sheet.';
         form.reset();
         actualizarAyudaMonto();
       }else{
