@@ -5,14 +5,23 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Dineros Tumberos</title>
   <style>
-    :root{--bg:#080808;--card:#151515;--ink:#f4f1e8;--muted:#bdb5a6;--line:rgba(244,241,232,.22);--ok:#d8ffd8;--bad:#ffd8d8}
+    :root{--bg:#080808;--card:#151515;--ink:#f4f1e8;--muted:#bdb5a6;--line:rgba(244,241,232,.22);--line-strong:rgba(244,241,232,.55);--ok:#d8ffd8;--bad:#ffd8d8}
     *{box-sizing:border-box}
     body{margin:0;min-height:100vh;background:radial-gradient(circle at top,#222 0,#080808 50%,#020202 100%);color:var(--ink);font-family:Arial,Helvetica,sans-serif;display:grid;place-items:center;padding:22px}
     main{width:min(440px,100%);background:linear-gradient(180deg,rgba(21,21,21,.96),rgba(7,7,7,.96));border:1px solid var(--line);border-radius:28px;padding:26px;box-shadow:0 28px 90px rgba(0,0,0,.65)}
     h1{margin:0 0 8px;font-size:30px;line-height:1.05}
     p{margin:0 0 24px;color:var(--muted);font-size:14px;line-height:1.45}
-    label{display:block;margin:18px 0 7px;font-weight:800;font-size:15px}
+    label,legend{display:block;margin:18px 0 7px;font-weight:800;font-size:15px}
     select,input,button{width:100%;border-radius:16px;border:1px solid var(--line);font-size:18px;padding:14px;background:#0f0f0f;color:var(--ink)}
+    fieldset{margin:0;padding:0;border:0}
+    .currency-options{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .currency-option{margin:0;cursor:pointer}
+    .currency-option input{position:absolute;opacity:0;pointer-events:none;width:1px;height:1px}
+    .currency-option span{min-height:54px;display:flex;align-items:center;justify-content:center;border:1px solid var(--line);border-radius:16px;background:#0f0f0f;color:var(--muted);font-size:16px;font-weight:900;text-align:center;transition:background .15s,border-color .15s,color .15s,transform .12s}
+    .currency-option input:checked+span{background:var(--ink);border-color:var(--ink);color:#050505}
+    .currency-option input:focus-visible+span{outline:2px solid var(--ink);outline-offset:3px}
+    .currency-option:hover span{border-color:var(--line-strong);transform:translateY(-1px)}
+    .amount-note{display:block;margin-top:7px;color:var(--muted);font-size:12px}
     button{margin-top:24px;background:var(--ink);color:#050505;font-weight:900;cursor:pointer;border:0}
     button:disabled{opacity:.65;cursor:wait}
     .status{min-height:22px;margin-top:16px;font-weight:800;font-size:14px;color:var(--muted)}
@@ -20,6 +29,7 @@
     .status.bad{color:var(--bad)}
     .note{margin-top:18px;font-size:12px;color:rgba(244,241,232,.58)}
     iframe{display:none;width:0;height:0;border:0}
+    @media(max-width:390px){.currency-options{grid-template-columns:1fr}.currency-option span{min-height:48px}}
   </style>
 </head>
 <body>
@@ -38,23 +48,50 @@
         <option value="Mateo">Mateo</option>
       </select>
 
+      <fieldset>
+        <legend>Moneda</legend>
+        <div class="currency-options">
+          <label class="currency-option">
+            <input type="radio" name="moneda" value="UYU" checked required>
+            <span>$ Pesos (UYU)</span>
+          </label>
+          <label class="currency-option">
+            <input type="radio" name="moneda" value="USD" required>
+            <span>US$ Dólares (USD)</span>
+          </label>
+        </div>
+      </fieldset>
+
       <label for="monto">Cuánto pagó</label>
-      <input id="monto" name="monto" type="number" inputmode="decimal" step="0.01" min="0" placeholder="Ej: 1500" required>
+      <input id="monto" name="monto" type="number" inputmode="decimal" step="0.01" min="0.01" placeholder="Ej: 1500" required>
+      <small id="amountNote" class="amount-note">Ingresá el importe en pesos uruguayos.</small>
 
       <button id="boton" type="submit">Guardar</button>
       <div id="status" class="status" aria-live="polite"></div>
-      <div class="note">Si alguien tiene este link puede cargar datos, pero no puede ver el Sheet desde esta página.</div>
+      <div class="note">El Sheet guarda el monto y la moneda por separado. Los totales de UYU y USD no se mezclan.</div>
     </form>
 
-    <iframe id="iframe" name="respuesta_oculta"></iframe>
+    <iframe id="iframe" name="respuesta_oculta" title="Respuesta del formulario"></iframe>
   </main>
 
   <script>
     const form=document.getElementById('form');
+    const monto=document.getElementById('monto');
+    const amountNote=document.getElementById('amountNote');
     const boton=document.getElementById('boton');
     const statusBox=document.getElementById('status');
     let enviado=false;
     let timer=null;
+
+    function monedaSeleccionada(){
+      return form.elements.moneda.value;
+    }
+
+    function actualizarAyudaMonto(){
+      const usd=monedaSeleccionada()==='USD';
+      monto.placeholder=usd?'Ej: 100':'Ej: 1500';
+      amountNote.textContent=usd?'Ingresá el importe en dólares estadounidenses.':'Ingresá el importe en pesos uruguayos.';
+    }
 
     function destrabar(){
       boton.disabled=false;
@@ -62,6 +99,8 @@
       enviado=false;
       if(timer){clearTimeout(timer);timer=null}
     }
+
+    form.elements.moneda.forEach(radio=>radio.addEventListener('change',actualizarAyudaMonto));
 
     form.addEventListener('submit',()=>{
       enviado=true;
@@ -82,14 +121,17 @@
       if(data.source!=='dineros-tumberos')return;
       if(data.ok){
         statusBox.className='status ok';
-        statusBox.textContent='Guardado. Revisá el Google Sheet.';
+        statusBox.textContent='Guardado en '+data.moneda+'. Revisá el Google Sheet.';
         form.reset();
+        actualizarAyudaMonto();
       }else{
         statusBox.className='status bad';
         statusBox.textContent=data.message||'Error al guardar.';
       }
       destrabar();
     });
+
+    actualizarAyudaMonto();
   </script>
 </body>
 </html>
