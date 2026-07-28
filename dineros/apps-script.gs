@@ -158,6 +158,7 @@ function rebuildTotals_(ss, paymentsSheet) {
     });
   }
 
+  totals.getRange(1, 1, totals.getMaxRows(), totals.getMaxColumns()).breakApart();
   totals.clear();
   totals.getRange('A1:C1').merge().setValue('Totales por moneda');
   totals.getRange('A2:C2').merge().setValue(
