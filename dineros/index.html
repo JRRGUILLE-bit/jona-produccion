@@ -80,10 +80,8 @@
     const amountNote=document.getElementById('amountNote');
     const boton=document.getElementById('boton');
     const statusBox=document.getElementById('status');
-    const iframe=document.getElementById('iframe');
     let enviado=false;
     let timer=null;
-    let fallbackTimer=null;
     let monedaEnviada='UYU';
 
     function monedaSeleccionada(){
@@ -101,7 +99,6 @@
       boton.textContent='Guardar';
       enviado=false;
       if(timer){clearTimeout(timer);timer=null}
-      if(fallbackTimer){clearTimeout(fallbackTimer);fallbackTimer=null}
     }
 
     function marcarGuardado(moneda){
@@ -125,16 +122,9 @@
       timer=setTimeout(()=>{
         if(!enviado)return;
         statusBox.className='status bad';
-        statusBox.textContent='No se pudo confirmar el envío. Revisá tu conexión e intentá de nuevo.';
+        statusBox.textContent='El Apps Script no confirmó el guardado. Revisá la implementación y sus permisos.';
         destrabar();
       },20000);
-    });
-
-    iframe.addEventListener('load',()=>{
-      if(!enviado)return;
-      fallbackTimer=setTimeout(()=>{
-        if(enviado)marcarGuardado(monedaEnviada);
-      },900);
     });
 
     window.addEventListener('message',event=>{
