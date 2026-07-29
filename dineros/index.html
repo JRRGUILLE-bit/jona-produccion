@@ -80,8 +80,11 @@
     const amountNote=document.getElementById('amountNote');
     const boton=document.getElementById('boton');
     const statusBox=document.getElementById('status');
+    const iframe=document.getElementById('iframe');
     let enviado=false;
     let timer=null;
+    let fallbackTimer=null;
+    let monedaEnviada='UYU';
 
     function monedaSeleccionada(){
       return form.elements.moneda.value;
@@ -98,11 +101,22 @@
       boton.textContent='Guardar';
       enviado=false;
       if(timer){clearTimeout(timer);timer=null}
+      if(fallbackTimer){clearTimeout(fallbackTimer);fallbackTimer=null}
+    }
+
+    function marcarGuardado(moneda){
+      if(!enviado)return;
+      statusBox.className='status ok';
+      statusBox.textContent='Guardado en '+moneda+'. Revisá el Google Sheet.';
+      form.reset();
+      actualizarAyudaMonto();
+      destrabar();
     }
 
     form.elements.moneda.forEach(radio=>radio.addEventListener('change',actualizarAyudaMonto));
 
     form.addEventListener('submit',()=>{
+      monedaEnviada=monedaSeleccionada();
       enviado=true;
       boton.disabled=true;
       boton.textContent='Guardando...';
@@ -111,24 +125,28 @@
       timer=setTimeout(()=>{
         if(!enviado)return;
         statusBox.className='status bad';
-        statusBox.textContent='No llegó respuesta del Apps Script. Revisá la implementación.';
+        statusBox.textContent='No se pudo confirmar el envío. Revisá tu conexión e intentá de nuevo.';
         destrabar();
-      },15000);
+      },20000);
+    });
+
+    iframe.addEventListener('load',()=>{
+      if(!enviado)return;
+      fallbackTimer=setTimeout(()=>{
+        if(enviado)marcarGuardado(monedaEnviada);
+      },900);
     });
 
     window.addEventListener('message',event=>{
       const data=event.data||{};
       if(data.source!=='dineros-tumberos')return;
       if(data.ok){
-        statusBox.className='status ok';
-        statusBox.textContent='Guardado en '+(data.moneda||monedaSeleccionada())+'. Revisá el Google Sheet.';
-        form.reset();
-        actualizarAyudaMonto();
+        marcarGuardado(data.moneda||monedaEnviada);
       }else{
         statusBox.className='status bad';
         statusBox.textContent=data.message||'Error al guardar.';
+        destrabar();
       }
-      destrabar();
     });
 
     actualizarAyudaMonto();
