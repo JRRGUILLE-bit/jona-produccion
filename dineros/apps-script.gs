@@ -1,10 +1,16 @@
-const PAYMENTS_SHEET_NAME = 'Pagos';
+const SPREADSHEET_ID = '1ptU07Hvm5bqUSykgblUIWUckILW4eJX2uLmFzsN14jo';
+const PAYMENTS_SHEET_NAMES = ['Pagos', 'Presupuesto'];
+const NEW_PAYMENTS_SHEET_NAME = 'Pagos';
 const TOTALS_SHEET_NAME = 'Totales';
 const DEFAULT_CURRENCY = 'UYU';
 
 function doPost(e) {
+  const lock = LockService.getScriptLock();
+
   try {
-    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    lock.waitLock(30000);
+
+    const ss = getSpreadsheet_();
     const params = e && e.parameter ? e.parameter : {};
     const nombre = String(params.nombre || '').trim();
     const moneda = normalizeCurrency_(params.moneda);
@@ -20,68 +26,84 @@ function doPost(e) {
       monto: monto,
       moneda: moneda
     });
-    rebuildTotals_(ss, sheet);
 
-    return iframeResponse_({ ok: true, moneda: moneda });
+    rebuildTotals_(ss, sheet);
+    SpreadsheetApp.flush();
+
+    return iframeResponse_({
+      ok: true,
+      moneda: moneda,
+      spreadsheetId: ss.getId(),
+      sheetName: sheet.getName()
+    });
   } catch (error) {
     return iframeResponse_({
       ok: false,
       message: error && error.message ? error.message : 'No se pudo guardar el pago.'
     });
+  } finally {
+    try {
+      lock.releaseLock();
+    } catch (ignored) {}
   }
 }
 
 function doGet() {
-  setupNow();
-  return ContentService
-    .createTextOutput('Dineros Tumberos listo. Pagos y Totales actualizados.')
-    .setMimeType(ContentService.MimeType.TEXT);
+  try {
+    const ss = getSpreadsheet_();
+    const sheet = ensurePaymentsSheet_(ss);
+    rebuildTotals_(ss, sheet);
+    SpreadsheetApp.flush();
+
+    return ContentService
+      .createTextOutput(JSON.stringify({
+        ok: true,
+        spreadsheet: ss.getName(),
+        spreadsheetId: ss.getId(),
+        paymentsSheet: sheet.getName()
+      }))
+      .setMimeType(ContentService.MimeType.JSON);
+  } catch (error) {
+    return ContentService
+      .createTextOutput(JSON.stringify({
+        ok: false,
+        message: error && error.message ? error.message : 'Error de diagnóstico.'
+      }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
 }
 
 function setupNow() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ss = getSpreadsheet_();
   const sheet = ensurePaymentsSheet_(ss);
   rebuildTotals_(ss, sheet);
+  SpreadsheetApp.flush();
+}
+
+function getSpreadsheet_() {
+  return SpreadsheetApp.openById(SPREADSHEET_ID);
 }
 
 function ensurePaymentsSheet_(ss) {
-  let sheet = findPaymentsSheet_(ss);
-  if (!sheet) sheet = ss.insertSheet(PAYMENTS_SHEET_NAME);
+  let sheet = null;
+
+  for (let i = 0; i < PAYMENTS_SHEET_NAMES.length; i++) {
+    sheet = ss.getSheetByName(PAYMENTS_SHEET_NAMES[i]);
+    if (sheet) break;
+  }
+
+  if (!sheet) sheet = ss.insertSheet(NEW_PAYMENTS_SHEET_NAME);
 
   if (sheet.getLastRow() === 0) {
-    sheet.getRange(1, 1, 1, 4).setValues([['Timestamp', 'Nombre', 'Monto', 'Moneda']]);
-  } else if (!looksLikeHeaderRow_(sheet)) {
-    sheet.insertRowBefore(1);
-    sheet.getRange(1, 1, 1, 4).setValues([['Timestamp', 'Nombre', 'Monto', 'Moneda']]);
+    sheet.getRange(1, 1, 1, 4).setValues([
+      ['Timestamp', 'Nombre', 'Monto', 'Moneda']
+    ]);
   }
 
   ensureRequiredColumns_(sheet);
   fillLegacyCurrency_(sheet);
   formatPaymentsSheet_(sheet);
   return sheet;
-}
-
-function findPaymentsSheet_(ss) {
-  const named = ss.getSheetByName(PAYMENTS_SHEET_NAME);
-  if (named) return named;
-
-  const sheets = ss.getSheets().filter(function(sheet) {
-    return sheet.getName() !== TOTALS_SHEET_NAME;
-  });
-
-  for (let i = 0; i < sheets.length; i++) {
-    if (looksLikeHeaderRow_(sheets[i])) return sheets[i];
-  }
-
-  if (sheets.length === 1) return sheets[0];
-  return null;
-}
-
-function looksLikeHeaderRow_(sheet) {
-  if (sheet.getLastRow() < 1 || sheet.getLastColumn() < 1) return false;
-  const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getDisplayValues()[0];
-  const map = headerMapFromValues_(headers);
-  return Boolean(map.nombre && map.monto);
 }
 
 function ensureRequiredColumns_(sheet) {
@@ -92,7 +114,8 @@ function ensureRequiredColumns_(sheet) {
     { key: 'moneda', title: 'Moneda' }
   ];
 
-  let map = getHeaderMap_(sheet);
+  const map = getHeaderMap_(sheet);
+
   required.forEach(function(item) {
     if (!map[item.key]) {
       const column = sheet.getLastColumn() + 1;
@@ -104,6 +127,7 @@ function ensureRequiredColumns_(sheet) {
 
 function fillLegacyCurrency_(sheet) {
   if (sheet.getLastRow() <= 1) return;
+
   const map = getHeaderMap_(sheet);
   const range = sheet.getRange(2, map.moneda, sheet.getLastRow() - 1, 1);
   const values = range.getValues();
@@ -112,6 +136,7 @@ function fillLegacyCurrency_(sheet) {
   values.forEach(function(row) {
     const original = String(row[0] || '').trim();
     const normalized = original ? normalizeCurrency_(original) : DEFAULT_CURRENCY;
+
     if (original !== normalized) {
       row[0] = normalized;
       changed = true;
@@ -152,6 +177,7 @@ function rebuildTotals_(ss, paymentsSheet) {
     data.forEach(function(row) {
       const amount = Number(row[map.monto - 1]);
       const currency = normalizeCurrency_(row[map.moneda - 1]);
+
       if (!isFinite(amount) || amount <= 0) return;
       sums[currency] += amount;
       counts[currency] += 1;
@@ -162,7 +188,11 @@ function rebuildTotals_(ss, paymentsSheet) {
   totals.clear();
   totals.getRange('A1:C1').merge().setValue('Totales por moneda');
   totals.getRange('A2:C2').merge().setValue(
-    'Actualizado: ' + Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'dd/MM/yyyy HH:mm')
+    'Actualizado: ' + Utilities.formatDate(
+      new Date(),
+      ss.getSpreadsheetTimeZone(),
+      'dd/MM/yyyy HH:mm'
+    )
   );
   totals.getRange(4, 1, 3, 3).setValues([
     ['Moneda', 'Total', 'Pagos'],
@@ -170,8 +200,15 @@ function rebuildTotals_(ss, paymentsSheet) {
     ['USD', sums.USD, counts.USD]
   ]);
 
-  totals.getRange('A1:C1').setFontWeight('bold').setFontSize(16).setBackground('#151515').setFontColor('#f4f1e8');
-  totals.getRange('A4:C4').setFontWeight('bold').setBackground('#333333').setFontColor('#ffffff');
+  totals.getRange('A1:C1')
+    .setFontWeight('bold')
+    .setFontSize(16)
+    .setBackground('#151515')
+    .setFontColor('#f4f1e8');
+  totals.getRange('A4:C4')
+    .setFontWeight('bold')
+    .setBackground('#333333')
+    .setFontColor('#ffffff');
   totals.getRange('B5').setNumberFormat('"$" #,##0.00');
   totals.getRange('B6').setNumberFormat('"US$" #,##0.00');
   totals.setFrozenRows(4);
@@ -193,25 +230,34 @@ function formatPaymentsSheet_(sheet) {
     .setFontColor('#f4f1e8');
 
   if (sheet.getLastRow() > 1) {
-    sheet.getRange(2, map.timestamp, sheet.getLastRow() - 1, 1).setNumberFormat('dd/MM/yyyy HH:mm');
-    sheet.getRange(2, map.monto, sheet.getLastRow() - 1, 1).setNumberFormat('#,##0.00');
+    sheet.getRange(2, map.timestamp, sheet.getLastRow() - 1, 1)
+      .setNumberFormat('dd/MM/yyyy HH:mm');
+    sheet.getRange(2, map.monto, sheet.getLastRow() - 1, 1)
+      .setNumberFormat('#,##0.00');
+
     const validation = SpreadsheetApp.newDataValidation()
       .requireValueInList(['UYU', 'USD'], true)
       .setAllowInvalid(false)
       .build();
-    sheet.getRange(2, map.moneda, sheet.getLastRow() - 1, 1).setDataValidation(validation);
+
+    sheet.getRange(2, map.moneda, sheet.getLastRow() - 1, 1)
+      .setDataValidation(validation);
   }
 
   sheet.autoResizeColumns(1, sheet.getLastColumn());
 }
 
 function getHeaderMap_(sheet) {
-  const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getDisplayValues()[0];
+  const headers = sheet
+    .getRange(1, 1, 1, Math.max(sheet.getLastColumn(), 1))
+    .getDisplayValues()[0];
+
   return headerMapFromValues_(headers);
 }
 
 function headerMapFromValues_(headers) {
   const map = {};
+
   headers.forEach(function(value, index) {
     const normalized = normalizeText_(value);
     const column = index + 1;
@@ -221,6 +267,7 @@ function headerMapFromValues_(headers) {
     if (!map.monto && ['monto', 'importe', 'cuanto pago'].indexOf(normalized) !== -1) map.monto = column;
     if (!map.moneda && ['moneda', 'currency'].indexOf(normalized) !== -1) map.moneda = column;
   });
+
   return map;
 }
 
@@ -241,14 +288,22 @@ function normalizeCurrency_(value) {
 }
 
 function parseAmount_(value) {
-  const normalized = String(value == null ? '' : value).trim().replace(',', '.');
+  const normalized = String(value == null ? '' : value)
+    .trim()
+    .replace(',', '.');
   const amount = Number(normalized);
   return isFinite(amount) ? amount : NaN;
 }
 
 function iframeResponse_(data) {
-  const payload = JSON.stringify(Object.assign({ source: 'dineros-tumberos' }, data)).replace(/</g, '\\u003c');
+  const payload = JSON.stringify(
+    Object.assign({ source: 'dineros-tumberos' }, data)
+  ).replace(/</g, '\\u003c');
+
   return HtmlService
-    .createHtmlOutput('<!doctype html><meta charset="utf-8"><script>window.parent.postMessage(' + payload + ', "*");<\/script>')
+    .createHtmlOutput(
+      '<!doctype html><meta charset="utf-8">' +
+      '<script>window.parent.postMessage(' + payload + ', "*");<\/script>'
+    )
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
