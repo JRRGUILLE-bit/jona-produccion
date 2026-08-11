@@ -1,145 +1,170 @@
 <!doctype html>
-<html lang="es">
+<html lang="es-UY">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Dineros Tumberos</title>
+  <meta name="theme-color" content="#171512">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Dineros Tumberos — archivo</title>
+  <meta name="description" content="Archivo histórico del módulo de pagos de producción. El formulario está cerrado.">
   <style>
-    :root{--bg:#080808;--card:#151515;--ink:#f4f1e8;--muted:#bdb5a6;--line:rgba(244,241,232,.22);--line-strong:rgba(244,241,232,.55);--ok:#d8ffd8;--bad:#ffd8d8}
-    *{box-sizing:border-box}
-    body{margin:0;min-height:100vh;background:radial-gradient(circle at top,#222 0,#080808 50%,#020202 100%);color:var(--ink);font-family:Arial,Helvetica,sans-serif;display:grid;place-items:center;padding:22px}
-    main{width:min(440px,100%);background:linear-gradient(180deg,rgba(21,21,21,.96),rgba(7,7,7,.96));border:1px solid var(--line);border-radius:28px;padding:26px;box-shadow:0 28px 90px rgba(0,0,0,.65)}
-    h1{margin:0 0 8px;font-size:30px;line-height:1.05}
-    p{margin:0 0 24px;color:var(--muted);font-size:14px;line-height:1.45}
-    label,legend{display:block;margin:18px 0 7px;font-weight:800;font-size:15px}
-    select,input,button{width:100%;border-radius:16px;border:1px solid var(--line);font-size:18px;padding:14px;background:#0f0f0f;color:var(--ink)}
-    fieldset{margin:0;padding:0;border:0}
-    .currency-options{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-    .currency-option{margin:0;cursor:pointer}
-    .currency-option input{position:absolute;opacity:0;pointer-events:none;width:1px;height:1px}
-    .currency-option span{min-height:54px;display:flex;align-items:center;justify-content:center;border:1px solid var(--line);border-radius:16px;background:#0f0f0f;color:var(--muted);font-size:16px;font-weight:900;text-align:center;transition:background .15s,border-color .15s,color .15s,transform .12s}
-    .currency-option input:checked+span{background:var(--ink);border-color:var(--ink);color:#050505}
-    .currency-option input:focus-visible+span{outline:2px solid var(--ink);outline-offset:3px}
-    .currency-option:hover span{border-color:var(--line-strong);transform:translateY(-1px)}
-    .amount-note{display:block;margin-top:7px;color:var(--muted);font-size:12px}
-    button{margin-top:24px;background:var(--ink);color:#050505;font-weight:900;cursor:pointer;border:0}
-    button:disabled{opacity:.65;cursor:wait}
-    .status{min-height:22px;margin-top:16px;font-weight:800;font-size:14px;color:var(--muted)}
-    .status.ok{color:var(--ok)}
-    .status.bad{color:var(--bad)}
-    .note{margin-top:18px;font-size:12px;color:rgba(244,241,232,.58)}
-    iframe{display:none;width:0;height:0;border:0}
-    @media(max-width:390px){.currency-options{grid-template-columns:1fr}.currency-option span{min-height:48px}}
+    :root {
+      --bg: #0d0c0a;
+      --panel: #181612;
+      --panel-soft: #211e18;
+      --paper: #f2eee4;
+      --muted: #b9b09f;
+      --gold: #c7a46a;
+      --line: rgba(242, 238, 228, .16);
+      --shadow: 0 30px 90px rgba(0, 0, 0, .62);
+    }
+
+    * { box-sizing: border-box; }
+
+    html { min-height: 100%; background: var(--bg); }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      color: var(--paper);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at 16% 14%, rgba(199, 164, 106, .12), transparent 32%),
+        radial-gradient(circle at 86% 80%, rgba(199, 164, 106, .07), transparent 34%),
+        var(--bg);
+    }
+
+    main { width: min(760px, 100%); }
+
+    .archive-card {
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      background: linear-gradient(160deg, var(--panel-soft), var(--panel));
+      box-shadow: var(--shadow);
+    }
+
+    .archive-head {
+      min-height: 250px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: clamp(30px, 6vw, 54px);
+      border-bottom: 1px solid var(--line);
+      background:
+        linear-gradient(180deg, transparent, rgba(0, 0, 0, .34)),
+        repeating-linear-gradient(115deg, transparent 0 22px, rgba(255, 255, 255, .018) 22px 23px);
+    }
+
+    .eyebrow {
+      margin: 0 0 18px;
+      color: var(--gold);
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(42px, 9vw, 76px);
+      line-height: .94;
+      letter-spacing: -.06em;
+    }
+
+    .archive-body { padding: clamp(28px, 5vw, 46px); }
+
+    .lead {
+      max-width: 610px;
+      margin: 0;
+      color: var(--paper);
+      font-size: clamp(19px, 3vw, 24px);
+      line-height: 1.45;
+      letter-spacing: -.02em;
+    }
+
+    .status {
+      display: grid;
+      gap: 12px;
+      margin-top: 30px;
+      padding: 20px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(255, 255, 255, .035);
+    }
+
+    .status-row {
+      display: grid;
+      grid-template-columns: 130px 1fr;
+      gap: 16px;
+      align-items: baseline;
+    }
+
+    .status-row span {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 850;
+      letter-spacing: .07em;
+      text-transform: uppercase;
+    }
+
+    .status-row strong {
+      color: var(--gold);
+      font-size: 15px;
+    }
+
+    footer {
+      margin-top: 24px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    @media (max-width: 560px) {
+      body { padding: 12px; }
+      .archive-card { border-radius: 22px; }
+      .archive-head { min-height: 210px; }
+      .status-row { grid-template-columns: 1fr; gap: 4px; }
+    }
   </style>
 </head>
 <body>
   <main>
-    <h1>Dineros Tumberos</h1>
-    <p>Carga simple. La página no muestra registros anteriores. La información se manda al Google Sheet.</p>
+    <article class="archive-card">
+      <header class="archive-head">
+        <p class="eyebrow">Jona · archivo de producción</p>
+        <h1>Dineros Tumberos</h1>
+      </header>
 
-    <form id="form" action="https://script.google.com/macros/s/AKfycbxNs0Dof9JbDmWLIjo_tOLQz-6Kym5R3RnsnOKxu2_Ka8hh2ZF6mNKDnCvdTkTy6mOsdg/exec" method="post" target="respuesta_oculta" autocomplete="off">
-      <label for="nombre">Quién pagó</label>
-      <select id="nombre" name="nombre" required>
-        <option value="">Elegir nombre</option>
-        <option value="Pedro">Pedro</option>
-        <option value="Manu">Manu</option>
-        <option value="Male">Male</option>
-        <option value="Maite">Maite</option>
-        <option value="Mateo">Mateo</option>
-      </select>
+      <section class="archive-body">
+        <p class="lead">
+          Este módulo fue utilizado para registrar gastos y pagos durante la producción.
+          El formulario está cerrado y ya no guarda información.
+        </p>
 
-      <fieldset>
-        <legend>Moneda</legend>
-        <div class="currency-options">
-          <label class="currency-option">
-            <input type="radio" name="moneda" value="UYU" checked required>
-            <span>$ Pesos (UYU)</span>
-          </label>
-          <label class="currency-option">
-            <input type="radio" name="moneda" value="USD" required>
-            <span>US$ Dólares (USD)</span>
-          </label>
+        <div class="status" aria-label="Estado del módulo">
+          <div class="status-row">
+            <span>Estado</span>
+            <strong>Archivado</strong>
+          </div>
+          <div class="status-row">
+            <span>Carga de pagos</span>
+            <strong>Desactivada</strong>
+          </div>
+          <div class="status-row">
+            <span>Uso actual</span>
+            <strong>Referencia histórica únicamente</strong>
+          </div>
         </div>
-      </fieldset>
 
-      <label for="monto">Cuánto pagó</label>
-      <input id="monto" name="monto" type="number" inputmode="decimal" step="0.01" min="0.01" placeholder="Ej: 1500" required>
-      <small id="amountNote" class="amount-note">Ingresá el importe en pesos uruguayos.</small>
-
-      <button id="boton" type="submit">Guardar</button>
-      <div id="status" class="status" aria-live="polite"></div>
-      <div class="note">El Sheet guarda el monto y la moneda por separado. Los totales de UYU y USD no se mezclan.</div>
-    </form>
-
-    <iframe id="iframe" name="respuesta_oculta" title="Respuesta del formulario"></iframe>
+        <footer>
+          Los pagos y gastos ya no se administran desde este sitio.
+        </footer>
+      </section>
+    </article>
   </main>
-
-  <script>
-    const form=document.getElementById('form');
-    const monto=document.getElementById('monto');
-    const amountNote=document.getElementById('amountNote');
-    const boton=document.getElementById('boton');
-    const statusBox=document.getElementById('status');
-    let enviado=false;
-    let timer=null;
-    let monedaEnviada='UYU';
-
-    function monedaSeleccionada(){
-      return form.elements.moneda.value;
-    }
-
-    function actualizarAyudaMonto(){
-      const usd=monedaSeleccionada()==='USD';
-      monto.placeholder=usd?'Ej: 100':'Ej: 1500';
-      amountNote.textContent=usd?'Ingresá el importe en dólares estadounidenses.':'Ingresá el importe en pesos uruguayos.';
-    }
-
-    function destrabar(){
-      boton.disabled=false;
-      boton.textContent='Guardar';
-      enviado=false;
-      if(timer){clearTimeout(timer);timer=null}
-    }
-
-    function marcarGuardado(moneda){
-      if(!enviado)return;
-      statusBox.className='status ok';
-      statusBox.textContent='Guardado en '+moneda+'. Revisá el Google Sheet.';
-      form.reset();
-      actualizarAyudaMonto();
-      destrabar();
-    }
-
-    form.elements.moneda.forEach(radio=>radio.addEventListener('change',actualizarAyudaMonto));
-
-    form.addEventListener('submit',()=>{
-      monedaEnviada=monedaSeleccionada();
-      enviado=true;
-      boton.disabled=true;
-      boton.textContent='Guardando...';
-      statusBox.className='status';
-      statusBox.textContent='Mandando al Sheet...';
-      timer=setTimeout(()=>{
-        if(!enviado)return;
-        statusBox.className='status bad';
-        statusBox.textContent='El Apps Script no confirmó el guardado. Revisá la implementación y sus permisos.';
-        destrabar();
-      },20000);
-    });
-
-    window.addEventListener('message',event=>{
-      const data=event.data||{};
-      if(data.source!=='dineros-tumberos')return;
-      if(data.ok){
-        marcarGuardado(data.moneda||monedaEnviada);
-      }else{
-        statusBox.className='status bad';
-        statusBox.textContent=data.message||'Error al guardar.';
-        destrabar();
-      }
-    });
-
-    actualizarAyudaMonto();
-  </script>
 </body>
 </html>
